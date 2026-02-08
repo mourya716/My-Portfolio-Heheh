@@ -1,0 +1,605 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Mourya AI - Architect of Intelligence</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        :root { 
+            --glow-primary: hsl(210, 100%, 60%); 
+            --glow-secondary: hsl(280, 100%, 60%);
+            --bg-dark: #030712;
+        }
+        body { font-family: 'Space Grotesk', sans-serif; background-color: var(--bg-dark); color: #f9fafb; overflow: hidden; height: 100vh; width: 100vw; }
+        
+        /* Three.js Background Layer */
+        #bg-canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; opacity: 0.6; }
+
+        /* Glassmorphism Console */
+        .glass-pane { 
+            background: rgba(10, 15, 30, 0.7); 
+            -webkit-backdrop-filter: blur(20px); 
+            backdrop-filter: blur(20px); 
+            border: 1px solid rgba(100, 116, 139, 0.2);
+            box-shadow: 0 0 40px rgba(59, 130, 246, 0.15);
+        }
+
+        /* Scrollbar */
+        #chat-log::-webkit-scrollbar { width: 4px; }
+        #chat-log::-webkit-scrollbar-track { background: transparent; }
+        #chat-log::-webkit-scrollbar-thumb { background: rgba(59, 130, 246, 0.5); border-radius: 4px; }
+
+        /* Chat Bubbles */
+        .ai-bubble { 
+            background: rgba(15, 23, 42, 0.8); 
+            border-left: 3px solid #3b82f6;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.95rem;
+        }
+        .user-bubble { 
+            background: linear-gradient(135deg, #2563eb, #1d4ed8); 
+            color: white;
+            box-shadow: 0 4px 15px rgba(37, 99, 235, 0.3);
+        }
+
+        /* Project Cards */
+        .project-card {
+            background: rgba(30, 41, 59, 0.5);
+            border: 1px solid rgba(148, 163, 184, 0.1);
+            transition: all 0.3s ease;
+        }
+        .project-card:hover {
+            transform: translateY(-2px);
+            border-color: #60a5fa;
+            box-shadow: 0 0 15px rgba(96, 165, 250, 0.1);
+        }
+        
+        /* Animations */
+        .blinking-cursor { display: inline-block; width: 8px; height: 1.2rem; background-color: #60a5fa; animation: blink 1s infinite; margin-left: 4px; vertical-align: middle; }
+        @keyframes blink { 50% { opacity: 0; } }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .fade-in { animation: fadeIn 0.4s cubic-bezier(0.4, 0, 0.2, 1) forwards; }
+
+        /* Buttons */
+        .suggestion-btn { 
+            background: rgba(59, 130, 246, 0.1); 
+            border: 1px solid rgba(59, 130, 246, 0.2); 
+            font-family: 'JetBrains Mono', monospace; 
+            transition: all 0.2s ease; 
+        }
+        .suggestion-btn:hover { 
+            background: rgba(59, 130, 246, 0.25); 
+            border-color: #60a5fa; 
+            color: #bfdbfe; 
+            box-shadow: 0 0 10px rgba(59, 130, 246, 0.2);
+        }
+        
+        .launch-btn {
+            background: linear-gradient(90deg, #2563eb, #3b82f6);
+            position: relative;
+            overflow: hidden;
+        }
+        .launch-btn::before {
+            content: '';
+            position: absolute;
+            top: 0; left: -100%;
+            width: 100%; height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            transition: 0.5s;
+        }
+        .launch-btn:hover::before { left: 100%; }
+
+        /* Loader */
+        #loader { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #020617; display: flex; align-items: center; justify-content: center; z-index: 1000; transition: opacity 0.8s ease; }
+        .scan-line { width: 100%; height: 2px; background: linear-gradient(90deg, transparent, #3b82f6, transparent); position: absolute; animation: scan 2s linear infinite; }
+        @keyframes scan { 0% { top: 0%; opacity: 0; } 50% { opacity: 1; } 100% { top: 100%; opacity: 0; } }
+
+        /* Mobile tweaks */
+        @media (max-width: 640px) {
+            #main-content { height: 100vh; border-radius: 0; border: none; }
+            .glass-pane { backdrop-filter: blur(10px); }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="loader">
+        <div class="scan-line"></div>
+        <div id="loader-text" class="font-mono text-sm sm:text-lg text-blue-400 w-full max-w-md p-6 tracking-wide">
+        </div>
+    </div>
+    
+    <canvas id="bg-canvas"></canvas>
+
+    <main class="w-full max-w-5xl h-[95vh] sm:h-[90vh] glass-pane sm:rounded-2xl shadow-2xl flex flex-col transition-opacity duration-1000 opacity-0 relative overflow-hidden" id="main-content">
+        <header class="flex items-center justify-between p-4 border-b border-blue-900/30 flex-shrink-0 bg-black/20">
+             <div class="flex items-center space-x-2">
+                 <div class="w-3 h-3 bg-red-500/80 rounded-full shadow-[0_0_8px_rgba(239,68,68,0.6)]"></div>
+                 <div class="w-3 h-3 bg-yellow-500/80 rounded-full shadow-[0_0_8px_rgba(234,179,8,0.6)]"></div>
+                 <div class="w-3 h-3 bg-green-500/80 rounded-full shadow-[0_0_8px_rgba(34,197,94,0.6)]"></div>
+             </div>
+            <div class="text-center font-mono text-xs sm:text-sm tracking-widest text-blue-300/80">
+                <span class="hidden sm:inline">SYSTEM :: </span>MOURYA.AI <span class="text-xs text-blue-500">// V.4.2</span>
+            </div>
+            <div class="flex items-center gap-2">
+                <div id="system-status" class="text-[10px] text-green-400 font-mono animate-pulse">ONLINE</div>
+            </div>
+        </header>
+
+        <div id="chat-log" class="flex-1 p-4 sm:p-6 overflow-y-auto space-y-6 pb-20"></div>
+
+        <footer class="p-4 border-t border-blue-900/30 flex-shrink-0 bg-black/40 backdrop-blur-md absolute bottom-0 w-full">
+            <div class="relative max-w-4xl mx-auto">
+                <input type="text" id="userInput" autocomplete="off" placeholder="Access protocols: 'projects', 'resume', 'skills'..." 
+                    class="w-full bg-slate-900/80 border border-slate-700/50 rounded-lg py-3.5 pl-5 pr-14 text-blue-50 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 transition-all font-mono text-sm">
+                <button id="sendButton" class="absolute right-2 top-1/2 -translate-y-1/2 p-2 rounded-md text-blue-400 hover:text-white hover:bg-blue-600 transition-colors">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+                </button>
+            </div>
+        </footer>
+    </main>
+
+    <script>
+        // --- DATA MATRIX (RESUME SYNCED) ---
+        const portfolioData = {
+            greetings: [
+                "System initialized.",
+                "Identity verified: V. Maharaja Mourya.",
+                "Architect of Agentic AI & Generative Systems.",
+                "Awaiting command. Try `projects` to see my latest award-winning work."
+            ],
+            about: {
+                summary: "I am an Award-Winning AI Architect and Full-Stack Developer driven by a single mission: to build scalable, human-centric applications. My work bridges the gap between complex AI architectures (RAG, LLMs) and intuitive, gamified user experiences.",
+                detail: "Currently architecting 'Memoria', a privacy-focused AI agent for grief recovery. I specialize in combining technical rigor with product strategy."
+            },
+            skills: { 
+                "AI & LLMs": ["Llama 3", "Mistral", "RAG Pipelines", "LangChain", "Vector DBs (Pinecone)", "Agentic AI"], 
+                "Languages": ["Python", "C++", "JavaScript", "Dart", "SQL"], 
+                "Full Stack": ["React.js", "Node.js", "Flask", "Tailwind CSS", "Flutter (Mobile)"], 
+                "DevOps & Tools": ["Docker", "AWS (EC2)", "Git", "Vercel", "Figma", "Google Colab"] 
+            },
+            projects: [
+                { 
+                    id: "innovanta", 
+                    name: "Innovanta Solutions", 
+                    tag: "🏆 Best Student AI Project",
+                    description: "An award-winning AI solutions hub presented at the Kakinada AI Summit. Designed as a central portfolio for deploying future agentic services with a high-performance, modular React architecture.",
+                    stack: ["React.js", "AI Agents", "Vercel"], 
+                    link: "https://innovanta-solutions.vercel.app/",
+                    isHighlight: true
+                },
+                { 
+                    id: "lifequest", 
+                    name: "LifeQuest", 
+                    tag: "Gamification Engine",
+                    description: "A productivity RPG that transforms daily tasks into an adventure. Features a cinematic 'Adventure Interface', XP systems, and behavioral psychology mechanics to boost user retention.",
+                    stack: ["React.js", "Gamification Logic", "RPG Mechanics"], 
+                    link: "https://life-quest-your-adventure-begins.vercel.app/",
+                    isHighlight: true
+                },
+                { 
+                    id: "memoria", 
+                    name: "Memoria (In Dev)", 
+                    tag: "Research",
+                    description: "A privacy-first Agentic AI designed for grief recovery. Utilizes RAG pipelines to anchor responses in specific user memories and multi-modal voice cloning (Eleven Labs).",
+                    stack: ["RAG", "Llama 3", "Vector DB", "Eleven Labs"],
+                    link: null 
+                },
+                { 
+                    id: "sentiment", 
+                    name: "Amazon Sentiment Classifier", 
+                    tag: "NLP Model",
+                    description: "NLP-based classifier analyzing customer sentiment at scale. Trained on survey data to identify patterns with high accuracy.",
+                    stack: ["Python", "Scikit-learn", "NLP"], 
+                    hasDemo: true 
+                }
+            ],
+            experience: [ 
+                { role: "AI & Cloud Developer Intern", company: "Eduskills Foundation", year: "2025", description: "Deployed scalable ML models on AWS and automated data preprocessing workflows, reducing manual entry by 40%." },
+                { role: "Project Lead", company: "Innovanta Solutions", year: "Oct 2025", description: "Led the development of the award-winning scalable AI solutions hub." }
+            ],
+            education: { 
+                degree: "B.Tech in Artificial Intelligence & Data Science", 
+                college: "KIET Engineering College, JNTUK", 
+                graduation: "Expected 2027" 
+            },
+            achievements: [ 
+                { field: "Winner", detail: "'Best Student AI Project' for Innovanta Solutions at Kakinada AI Summit." },
+                { field: "Certifications", detail: "IBM AI Fundamentals, Microsoft Generative AI Career Essentials." },
+                { field: "Hackathons", detail: "Top Performer in multiple national level coding competitions." }
+            ],
+            contact: { email: "mourya.maha433@gmail.com", linkedin: "https://www.linkedin.com/in/vedurupaka-maharaja-mourya-2633a3278/", github: "https://github.com/mourya716" },
+            help: { 
+                'projects': 'View my award-winning work (Innovanta, LifeQuest).', 
+                'skills': 'Inspect my technical stack.', 
+                'about': 'My professional summary.', 
+                'experience': 'My industry track record.',
+                'contact': 'Connect with me.',
+                'clear': 'Reboot the interface.' 
+            }
+        };
+
+        // --- THREE.JS HYPERSPACE BACKGROUND ---
+        const initBackground = () => {
+            const canvas = document.getElementById('bg-canvas');
+            const scene = new THREE.Scene();
+            const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+            const renderer = new THREE.WebGLRenderer({ canvas: canvas, alpha: true });
+            
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+
+            // Create Starfield
+            const geometry = new THREE.BufferGeometry();
+            const count = 2000;
+            const positions = new Float32Array(count * 3);
+            const colors = new Float32Array(count * 3);
+
+            for(let i = 0; i < count * 3; i+=3) {
+                positions[i] = (Math.random() - 0.5) * 40;
+                positions[i+1] = (Math.random() - 0.5) * 40;
+                positions[i+2] = (Math.random() - 0.5) * 40;
+                
+                // Blue/Cyan tint
+                colors[i] = 0.2;
+                colors[i+1] = 0.5 + Math.random() * 0.5; 
+                colors[i+2] = 1.0;
+            }
+
+            geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+            geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+
+            const material = new THREE.PointsMaterial({
+                size: 0.15,
+                vertexColors: true,
+                transparent: true,
+                opacity: 0.8,
+                map: new THREE.TextureLoader().load('https://assets.codepen.io/127738/dotTexture.png'),
+                blending: THREE.AdditiveBlending,
+                depthWrite: false
+            });
+
+            const stars = new THREE.Points(geometry, material);
+            scene.add(stars);
+
+            camera.position.z = 10;
+
+            // Interactive Mouse Movement
+            let mouseX = 0;
+            let mouseY = 0;
+            let targetX = 0;
+            let targetY = 0;
+
+            const windowHalfX = window.innerWidth / 2;
+            const windowHalfY = window.innerHeight / 2;
+
+            document.addEventListener('mousemove', (event) => {
+                mouseX = (event.clientX - windowHalfX);
+                mouseY = (event.clientY - windowHalfY);
+            });
+
+            const clock = new THREE.Clock();
+
+            const animate = () => {
+                requestAnimationFrame(animate);
+                const delta = clock.getDelta();
+
+                targetX = mouseX * 0.001;
+                targetY = mouseY * 0.001;
+
+                stars.rotation.y += 0.0005 + (targetX * 0.05);
+                stars.rotation.x += 0.0002 + (targetY * 0.05);
+
+                renderer.render(scene, camera);
+            };
+
+            animate();
+
+            window.addEventListener('resize', () => {
+                camera.aspect = window.innerWidth / window.innerHeight;
+                camera.updateProjectionMatrix();
+                renderer.setSize(window.innerWidth, window.innerHeight);
+            });
+        };
+
+        // --- CORE LOGIC ---
+        document.addEventListener('DOMContentLoaded', () => {
+            initBackground();
+
+            const chatLog = document.getElementById('chat-log');
+            const userInput = document.getElementById('userInput');
+            const sendButton = document.getElementById('sendButton');
+            const loader = document.getElementById('loader');
+            const mainContent = document.getElementById('main-content');
+            const loaderTextContainer = document.getElementById('loader-text');
+
+            // --- TYPEWRITER EFFECT ---
+            const typeMessage = async (message, sender) => {
+                const messageEl = document.createElement('div');
+                messageEl.classList.add('fade-in', 'w-full', 'flex', sender === 'user' ? 'justify-end' : 'justify-start');
+                
+                const bubble = document.createElement('div');
+                bubble.classList.add('p-3', 'sm:p-4', 'rounded-xl', 'max-w-[85%]', 'sm:max-w-xl', sender === 'user' ? 'user-bubble' : 'ai-bubble', 'shadow-lg');
+                
+                const textContainer = document.createElement('div');
+                textContainer.className = "leading-relaxed break-words";
+                const cursor = document.createElement('span');
+                cursor.classList.add('blinking-cursor');
+                
+                bubble.appendChild(textContainer);
+                textContainer.appendChild(cursor);
+                messageEl.appendChild(bubble);
+                chatLog.appendChild(messageEl);
+                chatLog.scrollTop = chatLog.scrollHeight;
+
+                return new Promise(resolve => {
+                    let i = 0;
+                    const speed = sender === 'ai' ? 15 : 0; // Instant for user, fast for AI
+                    const interval = setInterval(() => {
+                        if (i < message.length) {
+                            textContainer.insertBefore(document.createTextNode(message[i]), cursor);
+                            i++;
+                            chatLog.scrollTop = chatLog.scrollHeight;
+                        } else {
+                            clearInterval(interval);
+                            textContainer.removeChild(cursor);
+                            resolve();
+                        }
+                    }, speed);
+                });
+            };
+
+            // --- HTML MESSAGE RENDERER (For Cards/Lists) ---
+            const displayHtmlMessage = (html, sender, suggestions = [], specialActions = []) => {
+                const messageEl = document.createElement('div');
+                messageEl.classList.add('fade-in', 'w-full', 'flex', sender === 'user' ? 'justify-end' : 'justify-start');
+                
+                let suggestionHtml = suggestions.length > 0 ? 
+                    `<div class="mt-3 flex flex-wrap gap-2">${suggestions.map(s => `<button class="suggestion-btn text-[10px] sm:text-xs text-blue-300 px-3 py-1.5 rounded-full" onclick="handleSuggestionClick('${s}')">${s}</button>`).join('')}</div>` : '';
+                
+                messageEl.innerHTML = `<div class="p-4 rounded-xl max-w-[95%] sm:max-w-2xl ${sender === 'user' ? 'user-bubble' : 'ai-bubble'} shadow-lg w-full overflow-hidden">${html}${suggestionHtml}</div>`;
+                
+                chatLog.appendChild(messageEl);
+                chatLog.scrollTop = chatLog.scrollHeight;
+            };
+
+            // --- GLOBAL HANDLERS ---
+            window.handleSuggestionClick = (command) => { 
+                userInput.value = command; 
+                handleUserInput(); 
+            };
+            
+            window.handleActionClick = (action, payload) => { 
+                if(action === 'runDemo') runDemo(payload); 
+            };
+
+            // --- COMMAND PROCESSOR ---
+            const handleUserInput = async () => { 
+                const command = userInput.value.trim(); 
+                if (command === '') return; 
+                
+                await typeMessage(command, 'user');
+                userInput.value = ''; 
+                
+                // Simulate processing time
+                const processingEl = document.createElement('div');
+                processingEl.innerHTML = '<span class="text-xs font-mono text-gray-500 ml-2 animate-pulse">...computing</span>';
+                chatLog.appendChild(processingEl);
+                
+                await new Promise(r => setTimeout(r, 600)); // Latency
+                chatLog.removeChild(processingEl);
+                
+                processCommand(command); 
+            };
+
+            const runDemo = (projectId) => { 
+                if (projectId === 'sentiment') { 
+                    const demoId = `demo-sentiment-${Date.now()}`; 
+                    const html = `
+                        <div class="bg-gray-900/50 p-4 rounded-lg mt-2 border border-blue-900/30">
+                            <p class="font-mono text-xs text-green-400 mb-2">// LOADING SENTIMENT MODEL_</p>
+                            <textarea id="text-${demoId}" class="w-full bg-slate-800/80 border border-slate-700 rounded-md p-2 text-sm text-gray-200 focus:ring-1 focus:ring-blue-500 outline-none" placeholder="Type a review (e.g., 'This product is amazing!')"></textarea>
+                            <button class="w-full mt-2 bg-blue-600 hover:bg-blue-500 rounded-md py-2 text-sm font-semibold transition-colors" onclick="analyzeSentiment('${demoId}')">ANALYZE TEXT</button>
+                            <p id="result-${demoId}" class="mt-2 font-mono text-center text-sm font-bold h-6"></p>
+                        </div>`; 
+                    displayHtmlMessage(html, 'ai'); 
+                } 
+            };
+
+            window.analyzeSentiment = (demoId) => { 
+                const textArea = document.getElementById(`text-${demoId}`); 
+                const resultEl = document.getElementById(`result-${demoId}`); 
+                const text = textArea.value.toLowerCase(); 
+                if (!text) return; 
+                
+                const positive = ['good', 'great', 'excellent', 'love', 'best', 'awesome', 'fantastic', 'amazing', 'perfect', 'innovanta']; 
+                const negative = ['bad', 'poor', 'terrible', 'hate', 'worst', 'disappointed', 'awful', 'horrible', 'slow']; 
+                
+                let score = 0; 
+                text.split(' ').forEach(word => { 
+                    const cleanWord = word.replace(/[.,!]/g, '');
+                    if (positive.includes(cleanWord)) score++; 
+                    if (negative.includes(cleanWord)) score--; 
+                }); 
+                
+                resultEl.className = "mt-2 font-mono text-center text-sm font-bold h-6"; // reset
+                if (score > 0) { 
+                    resultEl.textContent = ">> POSITIVE SENTIMENT DETECTED"; 
+                    resultEl.classList.add('text-green-400'); 
+                } else if (score < 0) { 
+                    resultEl.textContent = ">> NEGATIVE SENTIMENT DETECTED"; 
+                    resultEl.classList.add('text-red-400'); 
+                } else { 
+                    resultEl.textContent = ">> NEUTRAL / UNDEFINED"; 
+                    resultEl.classList.add('text-gray-400'); 
+                } 
+            };
+
+            const processCommand = (command) => {
+                const lowerCmd = command.toLowerCase();
+                let html = '', suggestions = [];
+
+                // --- PROJECTS LOGIC ---
+                if (lowerCmd.includes('project') || lowerCmd.includes('innovanta') || lowerCmd.includes('life')) {
+                    html = '<h3 class="font-bold text-lg mb-4 text-blue-300 border-b border-gray-700 pb-2">Mission Log</h3>';
+                    html += '<div class="grid grid-cols-1 gap-4">';
+                    
+                    portfolioData.projects.forEach(p => {
+                        let linkButton = '';
+                        if (p.link) {
+                            linkButton = `<a href="${p.link}" target="_blank" class="launch-btn inline-flex items-center gap-2 px-4 py-1.5 rounded-md text-white text-xs font-bold shadow-lg transform hover:scale-105 transition-all">
+                                🚀 LAUNCH
+                            </a>`;
+                        } else if (p.hasDemo) {
+                            linkButton = `<button class="bg-gray-700 hover:bg-gray-600 px-4 py-1.5 rounded-md text-gray-200 text-xs font-bold transition-all" onclick="window.handleActionClick('runDemo', '${p.id}')">⚡ RUN DEMO</button>`;
+                        } else {
+                            linkButton = `<span class="px-4 py-1.5 rounded-md border border-gray-600 text-gray-500 text-xs font-mono">ENCRYPTED // IN DEV</span>`;
+                        }
+
+                        let tagHtml = p.tag ? `<span class="absolute top-2 right-2 bg-blue-900/80 text-blue-200 text-[10px] px-2 py-0.5 rounded border border-blue-500/30">${p.tag}</span>` : '';
+                        let highlightClass = p.isHighlight ? 'border-l-4 border-l-yellow-500 bg-blue-900/10' : '';
+
+                        html += `
+                        <div class="project-card relative p-4 rounded-lg ${highlightClass}">
+                            ${tagHtml}
+                            <div class="flex justify-between items-start mb-2">
+                                <h4 class="font-bold text-gray-100 text-lg">${p.name}</h4>
+                            </div>
+                            <p class="text-gray-400 text-sm mb-3 leading-relaxed">${p.description}</p>
+                            <div class="flex flex-wrap gap-2 mb-4">
+                                ${p.stack.map(s => `<span class="text-[10px] text-blue-300 bg-blue-900/30 px-2 py-1 rounded border border-blue-800/50">${s}</span>`).join('')}
+                            </div>
+                            <div class="flex justify-end">
+                                ${linkButton}
+                            </div>
+                        </div>`;
+                    });
+                    html += '</div>';
+                    suggestions = ['skills', 'experience'];
+                }
+                
+                // --- ABOUT LOGIC ---
+                else if (lowerCmd.includes('about') || lowerCmd.includes('who')) {
+                    html = `<h3 class="font-bold text-lg mb-2 text-blue-300">Identity Record</h3>
+                            <p class="text-gray-300 leading-relaxed mb-4">${portfolioData.about.summary}</p>
+                            <p class="text-gray-400 text-sm border-l-2 border-blue-500 pl-3 italic">${portfolioData.about.detail}</p>`;
+                    suggestions = ['skills', 'projects'];
+                }
+
+                // --- SKILLS LOGIC ---
+                else if (lowerCmd.includes('skill') || lowerCmd.includes('stack')) {
+                    html = '<h3 class="font-bold text-lg mb-4 text-blue-300">Technical Arsenal</h3><div class="grid grid-cols-1 sm:grid-cols-2 gap-4">';
+                    for (const category in portfolioData.skills) {
+                        html += `<div class="bg-slate-800/40 p-3 rounded-lg border border-slate-700/50">
+                                    <p class="text-xs font-mono text-gray-400 mb-2 uppercase tracking-wider">${category}</p>
+                                    <div class="flex flex-wrap gap-2">
+                                        ${portfolioData.skills[category].map(skill => `<span class="bg-blue-600/20 text-blue-200 text-xs font-medium px-2 py-1 rounded border border-blue-500/20">${skill}</span>`).join('')}
+                                    </div>
+                                 </div>`;
+                    }
+                    html += '</div>';
+                    suggestions = ['projects', 'education'];
+                }
+
+                // --- EXPERIENCE LOGIC ---
+                else if (lowerCmd.includes('experience') || lowerCmd.includes('work')) {
+                    html = '<h3 class="font-bold text-lg mb-4 text-blue-300">Career Trajectory</h3>';
+                    portfolioData.experience.forEach((exp, index) => {
+                        html += `<div class="relative pl-6 pb-6 border-l border-gray-700 last:border-0">
+                                    <div class="absolute -left-[5px] top-0 w-2.5 h-2.5 rounded-full bg-blue-500 shadow-[0_0_10px_#3b82f6]"></div>
+                                    <p class="font-bold text-gray-100">${exp.role}</p>
+                                    <p class="text-blue-400 text-sm mb-1">${exp.company} <span class="text-gray-500"> // ${exp.year}</span></p>
+                                    <p class="text-gray-400 text-sm leading-snug">${exp.description}</p>
+                                 </div>`;
+                    });
+                    suggestions = ['achievements', 'contact'];
+                }
+
+                // --- CONTACT LOGIC ---
+                else if (lowerCmd.includes('contact') || lowerCmd.includes('hire')) {
+                    html = `<h3 class="font-bold text-lg mb-4 text-blue-300">Secure Channels</h3>
+                            <div class="flex flex-col sm:flex-row gap-3">
+                                <a href="mailto:${portfolioData.contact.email}" class="flex items-center justify-center gap-2 bg-slate-800 hover:bg-slate-700 border border-slate-600 text-white py-2 px-4 rounded-lg transition-all">
+                                    ✉️ Email
+                                </a>
+                                <a href="${portfolioData.contact.linkedin}" target="_blank" class="flex items-center justify-center gap-2 bg-[#0077b5] hover:bg-[#006396] text-white py-2 px-4 rounded-lg transition-all">
+                                    LinkedIn
+                                </a>
+                                <a href="${portfolioData.contact.github}" target="_blank" class="flex items-center justify-center gap-2 bg-[#333] hover:bg-[#222] text-white py-2 px-4 rounded-lg transition-all">
+                                    GitHub
+                                </a>
+                            </div>`;
+                }
+
+                // --- HELP/DEFAULT ---
+                else if (lowerCmd.includes('help')) {
+                    html = '<h3 class="font-bold text-lg mb-3 text-blue-300">Command List</h3><div class="grid grid-cols-2 gap-2">'; 
+                    for (const key in portfolioData.help) { 
+                        html += `<div class="bg-gray-800/30 p-2 rounded"><strong class="font-mono text-blue-400 text-sm">${key}</strong><p class="text-xs text-gray-400">${portfolioData.help[key]}</p></div>`; 
+                    }
+                    html += '</div>';
+                }
+                else if (lowerCmd.includes('clear')) {
+                    chatLog.innerHTML = ''; 
+                    startConversation(); // restart
+                    return;
+                }
+                else {
+                    html = `<span class="text-red-400 font-mono">>> ERROR: Command '${command}' not recognized.</span><br>Try typing <span class="text-blue-400 cursor-pointer" onclick="window.handleSuggestionClick('help')">help</span> for a list of protocols.`;
+                }
+
+                displayHtmlMessage(html, 'ai', suggestions);
+            };
+
+            // --- BOOT SEQUENCE ---
+            const startConversation = async () => { 
+                for (const msg of portfolioData.greetings) { 
+                    await typeMessage(msg, 'ai'); 
+                } 
+            };
+
+            const runBootSequence = async () => {
+                const loadingSteps = [
+                    { text: "BIOS CHECK ........... OK", time: 200 },
+                    { text: "LOADING VMM KERNEL ... OK", time: 300 },
+                    { text: "CONNECTING NEURAL LINK", time: 400 },
+                    { text: "MOUNTING PROJECT DATA", time: 300 },
+                    { text: "SYSTEM ONLINE", time: 200 }
+                ];
+
+                for (const step of loadingSteps) {
+                    const p = document.createElement('p');
+                    p.className = "text-blue-500/80 font-mono text-xs sm:text-sm mb-1";
+                    p.innerText = step.text;
+                    loaderTextContainer.appendChild(p);
+                    await new Promise(r => setTimeout(r, step.time));
+                }
+
+                // Glitch effect finish
+                loader.style.opacity = '0';
+                mainContent.style.opacity = '1';
+                setTimeout(() => {
+                    loader.style.display = 'none';
+                    startConversation();
+                }, 1000);
+            };
+
+            runBootSequence();
+            
+            // Auto focus
+            if(window.innerWidth > 768) userInput.focus();
+            
+            // Submit handlers
+            sendButton.addEventListener('click', handleUserInput); 
+            userInput.addEventListener('keypress', (e) => { 
+                if (e.key === 'Enter') handleUserInput(); 
+            });
+        });
+    </script>
+</body>
+</html>
