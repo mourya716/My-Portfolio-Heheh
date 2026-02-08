@@ -63,7 +63,7 @@
     </main>
 
     <script>
-        // --- KNOWLEDGE BASE (UPDATED WITH "LIVING PORTFOLIO" GREETING) ---
+        // --- KNOWLEDGE BASE ---
         const portfolioData = {
             greetings: [
                 "System initialized.", 
@@ -77,7 +77,6 @@
             },
             vision: "I believe we are at a unique intersection in history. Technology is no longer just about writing code; it's about composing the future.<br><br>Every project, every algorithm, every line of code is a step toward solving a real human problem. This interface isn't just a portfolio; it's a testament to that belief: that we can and should build experiences that are intelligent, intuitive, and ultimately, empowering.<br><br>My goal is to be at the forefront of this wave, building systems that don't just function, but inspire.",
             contact: { email: "mourya.maha433@gmail.com", linkedin: "https://linkedin.com/in/vedurupaka-maharaja-mourya-2633a3278", github: "https://github.com/mourya716" },
-            // UPDATED EDUCATION: Removed "Expected", set to "Graduated: 2027"
             education: { degree: "B.Tech in Artificial Intelligence & Data Science", college: "KIET Engineering College, Korangi (Affiliated With JNTUK University)", graduation: "Graduated: 2027" },
             skills: { 
                 "Core AI": ["LLMs (Llama 3, Mistral)", "RAG Pipelines", "Agentic AI", "Vector DBs", "LangChain"], 
@@ -87,9 +86,22 @@
             },
             projects: [
                 { 
+                    id: "parallel-walk", 
+                    name: "The Parallel Walk", 
+                    description: "An interactive journey bridging the gap in safety perception. It starts with shared daily struggles before shifting into a stark 'night mode,' revealing the hidden fear women navigate. By placing users in her shoes, it transforms understanding into empathy, ending with a powerful pledge: protect her peace, do not become her fear.", 
+                    stack: ["Social Impact", "Interactive Story", "Vercel"], 
+                    link: "https://the-parallel-walk.vercel.app/"
+                },
+                { 
+                    id: "quiet-room", 
+                    name: "The Quiet Room", 
+                    description: "A digital sanctuary for navigating the waves of grief. It offers a judgment-free space to validate emotions, steady your breath, and release burdens into the void. Designed not to fix you, but to hold you, it concludes with a candle-lighting ritual to honor your loss. A gentle companion for when the world feels too heavy.", 
+                    stack: ["Grief Recovery", "Interactive Ritual", "Vercel"], 
+                    link: "https://the-quiet-room.vercel.app/"
+                },
+                { 
                     id: "gaaju-bomma", 
                     name: "Project Gaaju Bomma: The Glass Doll", 
-                    // UPDATED DESCRIPTION: The full manifesto with correct spelling
                     description: "We often say we 'understand' women. But we don't. I wanted to bridge that gap with an Experience. <br><br>🔴 <b>The Biology:</b> I coded a 'Red Pulse' engine that visually throbs the screen, simulating the disruption of periods.<br>🔦 <b>The Safety:</b> A 'Flashlight Physics' system where the screen goes pitch black, and the user must navigate darkness.<br>❤️ <b>The Truth:</b> It ends with a duty: Men shouldn't be saviors. We must be Guardians.<br><br>Built using pure HTML/CSS/JS. No libraries. Just emotion and logic combined.", 
                     stack: ["Narrative Design", "Physics Engine", "Vercel"], 
                     link: "https://project-gaaju-bomma-the-walk.vercel.app/"
@@ -97,7 +109,6 @@
                 { 
                     id: "aether", 
                     name: "Project Aether", 
-                    // UPDATED DESCRIPTION: Neural Resonance
                     description: "NEURAL RESONANCE & FOCUS ENGINE. A cutting-edge exploration of digital ethereal spaces.", 
                     stack: ["Experimental UI", "Web Technologies", "Vercel"], 
                     link: "https://project-aether-chi.vercel.app/"
@@ -156,7 +167,7 @@
             }
         };
 
-        // --- ORIGINAL THREE.JS BACKGROUND ---
+        // --- THREE.JS BACKGROUND ---
         const scene = new THREE.Scene(); 
         const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000); 
         const renderer = new THREE.WebGLRenderer({ canvas: document.getElementById('bg-canvas'), antialias: true }); 
@@ -282,7 +293,7 @@
                 else { resultEl.textContent = "Result: Neutral"; resultEl.classList.add('text-gray-400'); } 
             };
             
-            // --- ORIGINAL MASTERPIECE BOOT SEQUENCE ---
+            // --- BOOT SEQUENCE ---
             const loadingSteps = [
                 { text: "VMM CEREBRUM BIOS v4.0", status: "OK" },
                 { text: "Initializing system core", status: "OK" },
@@ -334,7 +345,8 @@
             const processCommand = (command) => {
                 const lowerCmd = command.toLowerCase();
                 let html = '', suggestions = [], specialActions = [];
-                const projectMatch = portfolioData.projects.find(p => p.name.toLowerCase().includes(lowerCmd));
+                // UPDATED: Check for projects more broadly
+                const projectMatch = portfolioData.projects.find(p => lowerCmd.includes(p.name.toLowerCase()) || (p.id && lowerCmd.includes(p.id)));
 
                 if (projectMatch) {
                       html = `<p class="font-semibold text-md text-gray-200">${projectMatch.name}</p><p class="text-gray-400 text-sm my-2">${projectMatch.description}</p><div class="flex flex-wrap gap-2 mt-2">${projectMatch.stack.map(s => `<span class="bg-blue-900/50 text-blue-300 text-xs font-medium px-2 py-1 rounded-full">${s}</span>`).join('')}</div>`;
