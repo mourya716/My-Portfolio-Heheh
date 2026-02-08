@@ -77,7 +77,8 @@
             },
             vision: "I believe we are at a unique intersection in history. Technology is no longer just about writing code; it's about composing the future.<br><br>Every project, every algorithm, every line of code is a step toward solving a real human problem. This interface isn't just a portfolio; it's a testament to that belief: that we can and should build experiences that are intelligent, intuitive, and ultimately, empowering.<br><br>My goal is to be at the forefront of this wave, building systems that don't just function, but inspire.",
             contact: { email: "mourya.maha433@gmail.com", linkedin: "https://linkedin.com/in/vedurupaka-maharaja-mourya-2633a3278", github: "https://github.com/mourya716" },
-            education: { degree: "B.Tech in Artificial Intelligence & Data Science", college: "KIET Engineering College, Korangi (Affiliated With JNTUK University)", graduation: "Expected 2027" },
+            // UPDATED EDUCATION: Removed "Expected", set to "Graduated: 2027"
+            education: { degree: "B.Tech in Artificial Intelligence & Data Science", college: "KIET Engineering College, Korangi (Affiliated With JNTUK University)", graduation: "Graduated: 2027" },
             skills: { 
                 "Core AI": ["LLMs (Llama 3, Mistral)", "RAG Pipelines", "Agentic AI", "Vector DBs", "LangChain"], 
                 "Languages": ["Python", "C++", "JavaScript", "Dart", "SQL"], 
@@ -85,6 +86,22 @@
                 "Tools": ["Git", "Docker", "AWS (EC2)", "Vercel", "Figma"] 
             },
             projects: [
+                { 
+                    id: "gaaju-bomma", 
+                    name: "Project Gaaju Bomma: The Glass Doll", 
+                    // UPDATED DESCRIPTION: The full manifesto with correct spelling
+                    description: "We often say we 'understand' women. But we don't. I wanted to bridge that gap with an Experience. <br><br>🔴 <b>The Biology:</b> I coded a 'Red Pulse' engine that visually throbs the screen, simulating the disruption of periods.<br>🔦 <b>The Safety:</b> A 'Flashlight Physics' system where the screen goes pitch black, and the user must navigate darkness.<br>❤️ <b>The Truth:</b> It ends with a duty: Men shouldn't be saviors. We must be Guardians.<br><br>Built using pure HTML/CSS/JS. No libraries. Just emotion and logic combined.", 
+                    stack: ["Narrative Design", "Physics Engine", "Vercel"], 
+                    link: "https://project-gaaju-bomma-the-walk.vercel.app/"
+                },
+                { 
+                    id: "aether", 
+                    name: "Project Aether", 
+                    // UPDATED DESCRIPTION: Neural Resonance
+                    description: "NEURAL RESONANCE & FOCUS ENGINE. A cutting-edge exploration of digital ethereal spaces.", 
+                    stack: ["Experimental UI", "Web Technologies", "Vercel"], 
+                    link: "https://project-aether-chi.vercel.app/"
+                },
                 { 
                     id: "innovanta", 
                     name: "Innovanta Solutions (Award Winner)", 
@@ -355,7 +372,7 @@
                     html = '<h3 class="font-bold text-lg mb-4 text-blue-300">Experience & Leadership</h3>'; portfolioData.experience.forEach(exp => { html += `<div class="mb-3"><p class="font-semibold text-md text-gray-200">${exp.role} <span class="text-gray-400 font-normal">@ ${exp.company}</span> <span class="text-xs text-gray-500">${exp.year}</span></p><p class="text-gray-400 text-sm">${exp.description}</p></div>`; }); suggestions = ['achievements', 'education'];
                 } 
                 else if (lowerCmd.includes('education')) {
-                    const edu = portfolioData.education; html = `<h3 class="font-bold text-lg mb-2 text-blue-300">Education</h3><p class="font-semibold text-gray-200">${edu.degree}</p><p class="text-gray-400">${edu.college}</p><p class="text-gray-500">Expected Graduation: ${edu.graduation}</p>`; suggestions = ['certifications', 'skills'];
+                    const edu = portfolioData.education; html = `<h3 class="font-bold text-lg mb-2 text-blue-300">Education</h3><p class="font-semibold text-gray-200">${edu.degree}</p><p class="text-gray-400">${edu.college}</p><p class="text-gray-500">Graduation: ${edu.graduation}</p>`; suggestions = ['certifications', 'skills'];
                 } 
                 else if (lowerCmd.includes('achievement')) {
                     html = '<h3 class="font-bold text-lg mb-4 text-blue-300">Achievements</h3>'; portfolioData.achievements.forEach(a => { html += `<p class="mb-2"><strong class="font-semibold text-gray-300">${a.field}:</strong> ${a.detail}</p>`; }); suggestions = ['certifications', 'contact'];
